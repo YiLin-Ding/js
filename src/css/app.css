@@ -1,0 +1,21 @@
+el-container{
+	el-header{
+		height: 200px;
+		background: gray;
+		i{
+			font-size: 18px;
+			margin-right: 10px;
+		}
+		span{
+			font-size: 18px;
+		}
+	}
+	el-main{
+		el-form-item{
+			el-input{
+
+			}
+		}
+
+	}
+}
