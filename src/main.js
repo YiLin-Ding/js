@@ -6,12 +6,12 @@ import router from './router'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import axios from 'axios'
-
+import MintUI from 'mint-ui'
 
 Vue.prototype.axios = axios
 Vue.config.productionTip = false
 Vue.use(ElementUI)
-
+Vue.use(MintUI)
 
 /* eslint-disable no-new */
 new Vue({
