@@ -7,11 +7,14 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import axios from 'axios'
 import MintUI from 'mint-ui'
+import 'mint-ui/lib/style.css'
+import Popup from 'mint-ui';
 
 Vue.prototype.axios = axios
 Vue.config.productionTip = false
 Vue.use(ElementUI)
 Vue.use(MintUI)
+Vue.use(Popup)
 
 /* eslint-disable no-new */
 new Vue({

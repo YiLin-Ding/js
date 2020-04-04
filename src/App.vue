@@ -14,12 +14,15 @@
       <el-form-item prop="type">
         <label for="">证件类型</label>
         <span class="tips">*</span>
-        <el-select v-model="ruleForm.type" placeholder="请选择">
-          <el-option label="请选择" value="choose" disabled="disabled"></el-option>
-          <el-option label="身份证" value="ID"></el-option>
-          <el-option label="军官证" value="officers"></el-option>
-          <el-option label="护照" value="passport"></el-option>
-        </el-select>
+         <input type="text" placeholder="请选择" v-model="ruleForm.type" maxlength="80" readonly="readonly" @click="showIdPicker" class="setInput"/>
+          <mt-popup v-model="idVisible" position="bottom">
+            <div class="cateContainer" @click.stop>
+                <div class="operateBtn">
+                  <div class="confirmBtn btn" @click="handleFinishId">完成</div>
+                </div> 
+                <mt-picker value-key="name" :slots="myId" @change="onIdChange" :showToolbar="true"></mt-picker>
+            </div>
+          </mt-popup>
       </el-form-item>
       <el-form-item prop="phone">
         <label for="">联系手机</label>
@@ -38,10 +41,16 @@ purpose">
       <el-form-item>
          <label for="">家庭住址</label>
          <span class="tips">*</span>
-          <div>
-           <mt-picker :slots="myAddressSlots" @change="onMyAddressChange"></mt-picker>
-            <p>地址：{{myAddressProvince}} {{myAddressCity}} {{myAddresscounty}}</p>
-          </div>
+         <input type="text" placeholder="请选择" v-model="ruleForm.address" maxlength="80" readonly="readonly" @click="showAddressPicker" class="setInput"/>
+         <mt-popup v-model="regionVisible" position="bottom">
+         <div class="cateContainer" @click.stop>
+            <div class="operateBtn">
+              <div class="cancelBtn btn" @click="handleCloseAddress">取消</div>
+              <div class="confirmBtn btn" @click="handleFinishAddress">完成</div>
+            </div>
+            <mt-picker class="addressPicker" :slots="myAddressSlots" @change="onAddressChange" :showToolbar="true"></mt-picker>
+         </div>
+         </mt-popup>   
       </el-form-item>
       <el-form-item prop="addressDetail">
         <label for="">详细地址</label>
@@ -67,13 +76,10 @@ purpose">
 
 <script>
 import axios from 'axios';
-import { Picker } from 'mint-ui';
- import myaddress from './json/city.json'
+import addressJson from './json/city.json';
+import $ from 'jquery';
 export default {
   name: 'Table',
-  components: {
-  'mt-picker': Picker
-  },
   data () {
     return {
       ruleForm: {
@@ -84,7 +90,7 @@ export default {
           address: '',
           addressDetail: '',
           agree: '',
-          radio: 0,
+          radio: 0
         },
     color: '#1ab394',
     phoneerrmsg: '',
@@ -92,47 +98,61 @@ export default {
     region: '',
     myAddressSlots: [
       {
-      flex: 1,
-      defaultIndex: 1, 
-      values: Object.keys(myaddress), //省份数组
-      className: 'slot1',
-      textAlign: 'center'
+        flex: 1,
+        values: Object.keys(addressJson),
+        className: 'slot1',
+        textAlign: 'center'
       }, {
-      divider: true,
-      content: '-',
-      className: 'slot2'
+        divider: true,
+        content: '-',
+        className: 'slot2'
       }, {
-      flex: 1,
-      values: [],
-      className: 'slot3',
-      textAlign: 'center'
+        flex: 1,
+        values: ['市辖区'],
+        className: 'slot3',
+        textAlign: 'center'
       },
       {
-      divider: true,
-      content: '-',
-      className: 'slot4'
+        divider: true,
+        content: '-',
+        className: 'slot4'
       },
       {
-      flex: 1,
-      values: [],
-      className: 'slot5',
-      textAlign: 'center'
+        flex: 1,
+        values: ['东城区'],
+        className: 'slot5',
+        textAlign: 'center'
       }
-      ],
-      myAddressProvince:'省',
-      myAddressCity:'市',
-      myAddresscounty:'区/县'
+    ],
+    province:'省',
+    city:'市',
+    county:'区/县',
+    idVisible: false,
+    myId: [{
+        values: [
+          {name:'请选择',value:'请选择'}, 
+          {name:'身份证',value:'身份证'}, 
+          {name:'军官证',value:'军官证'},
+          {name: '护照',value:'护照'}]
+          }],
+    id: 'id'
 }},
- mounted(){
-    this.$nextTick(() => { //vue里面全部加载好了再执行的函数 （类似于setTimeout）
-    this.myAddressSlots[0].defaultIndex = 0 
-    });
- },
   methods: {
     clickitem (e) {
       e === this.ruleForm.radio ? this.ruleForm.radio = '' : this.ruleForm.radio = e
     },
     getDate: function(){
+      if(this.ruleForm.phone!=""){
+          if(!(/^1[3456789]\d{9}$/.test(this.ruleForm.phone))){ 
+            this.$message({
+              showClose: true,
+              message: '手机号码有误，请重填!',
+              type: 'warning',
+              offset: '300px'
+            });
+            return
+        } 
+      }
       if(this.ruleForm.name==""){
         this.$message({
           showClose: true,
@@ -158,16 +178,6 @@ export default {
           offset: '300px'
         });
         return
-      }else if(this.ruleForm.phone!=""){
-          if(!(/^1[3456789]\d{9}$/.test(this.ruleForm.phone))){ 
-            this.$message({
-              showClose: true,
-              message: '手机号码有误，请重填!',
-              type: 'warning',
-              offset: '300px'
-            });
-          return
-        } 
       }else if(this.ruleForm.purpose==""){
         this.$message({
           showClose: true,
@@ -176,10 +186,10 @@ export default {
           offset: '300px'
         });
         return
-      }else if(this.ruleForm.selectProv==""||this.ruleForm.selectCity==""||this.ruleForm.selectArea==""){
+      }else if(this.ruleForm.address==""){
         this.$message({
           showClose: true,
-          message: '选择地区不能为空!',
+          message: '家庭住址不能为空!',
           type: 'warning',
           offset: '300px'
         });
@@ -200,20 +210,38 @@ export default {
           offset: '300px'
         });
         return
-      }else{
-       console.log(this.ruleForm)
       }
     },
-     onMyAddressChange(picker, values) {
-        if(myaddress[values[0]]){ //这个判断类似于v-if的效果（可以不加，但是vue会报错，很不爽）
-        picker.setSlotValues(1,Object.keys(myaddress[values[0]])); // Object.keys()会返回一个数组，当前省的数组
-        picker.setSlotValues(2,myaddress[values[0]][values[1]]); // 区/县数据就是一个数组
-        this.myAddressProvince = values[0];
-        this.myAddressCity = values[1];
-        this.myAddresscounty = values[2];
-        }
+    onAddressChange(picker, values) {
+      if(addressJson[values[0]]) {
+        picker.setSlotValues(1, Object.keys(addressJson[values[0]]));
+        picker.setSlotValues(2, addressJson[values[0]][values[1]]);
+        this.province = values[0];
+        this.city = values[1];
+        this.county = values[2];
+      }
     },
-  }
+    onIdChange(picker,values){
+        this.id = picker.getValues()[0].value;
+    },
+    showAddressPicker(){
+      this.regionVisible = true;
+    },
+    showIdPicker(){
+      this.idVisible = true;
+    },
+    handleFinishAddress(){
+      this.ruleForm.address = this.province + this.city+this.county;
+      this.regionVisible = false;
+    },
+    handleFinishId(){
+      this.ruleForm.type = this.id; 
+      this.idVisible = false;
+    },
+    handleCloseAddress(){
+      this.regionVisible = false;
+    }
+    }
 }
 </script>
 
@@ -239,36 +267,6 @@ export default {
     margin-top:60px;
     padding: 0;
     .el-form{
-      .el-form-item:nth-child(2){
-        .el-form-item__content{
-          .el-select{
-            width: 100% !important;
-            .el-input{
-              width: 93% !important;
-          }
-        }
-      }
-      }
-      el-form-item:nth-child(4){
-        .el-form-item__content{
-          div{
-            .control{
-              input{
-                width: 9rem;
-                padding: 0.32rem;
-                margin: 0.08rem  auto;
-                border-radius: 0.08rem;
-                border: 0.0267rem solid #e1e1e1;
-                background: #ffff;
-                font-size: 0.4267rem ;
-              }
-            }
-            .mint-popup{
-               width: 10rem;
-            }
-          }
-        }
-      }
       .el-form-item{
         .el-form-item__label{
           width: 100% !important;
@@ -281,12 +279,6 @@ export default {
           .el-input{
             width: 93%;
           }
-          .el-select{
-            width:30% !important;
-            .el-input{
-              width: 100%;
-            }
-          }
           .el-radio-group{
             width: 100%;
             .el-radio{
@@ -296,12 +288,41 @@ export default {
           .el-radio{
             width:100%;
           }
-          .distpicker-address-wrapper{
-            width: 93%;
-            select{
-              padding: 0;
-              width: 32%;
+          .mint-popup{
+            width: 100%;
+            height: 40%;
+            .cateContainer{
+              .operateBtn{
+                height: 55px;
+                background: #eee;
+                .btn{
+                  color: blue;
+                  line-height: 55px;
+                  font-size: 16px;
+                  cursor: pointer;
+                }
+                .cancelBtn {
+                  float: left;
+                  margin-left: 80px;
+                }
+                .confirmBtn{
+                  float: right;
+                  margin-right: 80px;
+                }
+              }
             }
+          }
+          .setInput{
+            display: block;
+            width: 86%;
+            height: 38px;
+            border: 1px solid #DCDFE6;
+            border-radius: 4px;
+            padding: 0 14px;
+          }
+          .setInput::placeholder{
+           font-size: 14px;
+           color: #c0c4cc;
           }
         }
         label{
